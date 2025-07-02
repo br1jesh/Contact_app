@@ -1,8 +1,7 @@
 package user
 
 import (
-	contact "Contact_App/Contact"
-	"fmt"
+	"Contact_App/contact"
 )
 
 type Role int
@@ -32,8 +31,10 @@ type User struct {
 	Contacts  []*contact.Contact
 }
 
-var users []*User
-var userId = 1
+var (
+	users  []*User
+	userId = 1
+)
 
 func newUser(firstName, lastName string, role Role) *User {
 	u := &User{
@@ -44,9 +45,9 @@ func newUser(firstName, lastName string, role Role) *User {
 		IsActive:  true,
 		Contacts:  []*contact.Contact{},
 	}
-	fmt.Println("Created User:", firstName, lastName, "(Role:", role.String(), ", ID:", u.UserID, ")")
-	userId++
 	users = append(users, u)
+	userId++
+	println("Created User:", firstName, lastName, "Role:", role.String(), "ID:", u.UserID)
 	return u
 }
 
@@ -55,19 +56,19 @@ func NewAdmin(firstName, lastName string) *User {
 }
 
 func (u *User) NewStaff(firstName, lastName string) *User {
-	if u.Role != Admin {
-		panic("Only Admin can create Staff. Current user role: " + u.Role.String())
+	if !u.checkIsAdminAndIsActive() {
+		return nil
 	}
 	return newUser(firstName, lastName, Staff)
 }
 
 func (u *User) checkIsAdminAndIsActive() bool {
 	if u.Role != Admin {
-		fmt.Println("Only Admin can perform this operation.")
+		println("Only Admin can perform this operation.")
 		return false
 	}
 	if !u.IsActive {
-		fmt.Println("Inactive Admin cannot perform this operation.")
+		println("Inactive Admin cannot perform this operation.")
 		return false
 	}
 	return true
@@ -75,14 +76,28 @@ func (u *User) checkIsAdminAndIsActive() bool {
 
 func (u *User) checkIsStaffAndIsActive() bool {
 	if u.Role != Staff {
-		fmt.Println("Only Staff can manage contacts.")
+		println("Only Staff can perform this operation.")
 		return false
 	}
 	if !u.IsActive {
-		fmt.Println("Inactive Staff cannot manage contacts.")
+		println("Inactive Staff cannot perform this operation.")
 		return false
 	}
 	return true
+}
+
+func (u *User) GetUserById(id int) *User {
+	if !u.checkIsAdminAndIsActive() {
+		return nil
+	}
+	for _, usr := range users {
+		if usr.UserID == id && usr.IsActive {
+			println("Fetched User ID:", id)
+			return usr
+		}
+	}
+	println("User not found with ID:", id)
+	return nil
 }
 
 func (u *User) GetAllUsers() []*User {
@@ -92,75 +107,55 @@ func (u *User) GetAllUsers() []*User {
 	return users
 }
 
-func (u *User) UpdateUser(target *User, param string, value interface{}) {
-	switch param {
-	case "FName":
-		u.UpdateUserFirstName(target, value)
-	case "LName":
-		u.UpdateUserLastName(target, value)
-	case "IsAdmin":
-		u.UpdateIsAdminStatus(target, value)
-	case "IsActive":
-		u.UpdateUserIsActiveStatus(target, value)
-	default:
-		fmt.Println("Unknown parameter:", param)
-	}
-}
 
-func (u *User) UpdateUserFirstName(target *User, value interface{}) {
+func (u *User) UpdateFirstName(target *User, firstName string) {
 	if !u.checkIsAdminAndIsActive() {
 		return
 	}
-	strVal, ok := value.(string)
-	if !ok || strVal == "" {
-		fmt.Println("UpdateUserFirstName: invalid string")
-		return
-	}
-	target.FirstName = strVal
-	fmt.Println("First name updated successfully.")
+	target.FirstName = firstName
+	println("Updated FirstName for User ID:", target.UserID)
 }
 
-func (u *User) UpdateUserLastName(target *User, value interface{}) {
+func (u *User) UpdateLastName(target *User, lastName string) {
 	if !u.checkIsAdminAndIsActive() {
 		return
 	}
-	strVal, ok := value.(string)
-	if !ok || strVal == "" {
-		fmt.Println("UpdateUserLastName: invalid string")
-		return
-	}
-	target.LastName = strVal
-	fmt.Println("Last name updated successfully.")
+	target.LastName = lastName
+	println("Updated LastName for User ID:", target.UserID)
 }
 
-func (u *User) UpdateIsAdminStatus(target *User, value interface{}) {
+func (u *User) UpdateRole(target *User, role Role) {
 	if !u.checkIsAdminAndIsActive() {
 		return
 	}
-	isAdmin, ok := value.(bool)
-	if !ok {
-		fmt.Println("UpdateIsAdminStatus: invalid bool")
-		return
-	}
-	if isAdmin {
-		target.Role = Admin
-	} else {
-		target.Role = Staff
-	}
-	fmt.Println("Role updated successfully.")
+	target.Role = role
+	println("Updated Role for User ID:", target.UserID, "to", role.String())
 }
 
-func (u *User) UpdateUserIsActiveStatus(target *User, value interface{}) {
+func (u *User) UpdateIsActive(target *User, isActive bool) {
 	if !u.checkIsAdminAndIsActive() {
 		return
 	}
-	status, ok := value.(bool)
-	if !ok {
-		fmt.Println("UpdateUserIsActiveStatus: invalid bool")
+	target.IsActive = isActive
+	println("Updated IsActive for User ID:", target.UserID, "to", isActive)
+}
+
+func (u *User) UpdateUser(target *User, firstName *string, lastName *string, role *Role, isActive *bool) {
+	if !u.checkIsAdminAndIsActive() {
 		return
 	}
-	target.IsActive = status
-	fmt.Println("IsActive status changed to:", status)
+	if firstName != nil {
+		u.UpdateFirstName(target, *firstName)
+	}
+	if lastName != nil {
+		u.UpdateLastName(target, *lastName)
+	}
+	if role != nil {
+		u.UpdateRole(target, *role)
+	}
+	if isActive != nil {
+		u.UpdateIsActive(target, *isActive)
+	}
 }
 
 func (u *User) DeleteUser(target *User) {
@@ -168,8 +163,9 @@ func (u *User) DeleteUser(target *User) {
 		return
 	}
 	target.IsActive = false
-	fmt.Println("User", target.FirstName, target.LastName, "(ID:", target.UserID, ") has been soft deleted (IsActive=false).")
+	println(" deleted user ID:", target.UserID)
 }
+
 
 func (u *User) CreateContact(fName, lName string) *contact.Contact {
 	if !u.checkIsStaffAndIsActive() {
@@ -178,6 +174,7 @@ func (u *User) CreateContact(fName, lName string) *contact.Contact {
 	cID := len(u.Contacts) + 1
 	newContact := contact.NewContact(fName, lName, cID)
 	u.Contacts = append(u.Contacts, newContact)
+	println("Created contact", fName, lName, "ID:", cID)
 	return newContact
 }
 
@@ -187,41 +184,52 @@ func (u *User) GetContactById(contactId int) *contact.Contact {
 	}
 	for _, c := range u.Contacts {
 		if c.ContactID == contactId && c.IsActive {
-			fmt.Println("Contact data fetched with ContactId:", contactId)
+			println(" contact ID:", contactId)
 			return c
 		}
 	}
-	fmt.Println("Contact Not Present with ContactId:", contactId)
+	println("Contact not found  ID:", contactId)
 	return nil
 }
 
-func (u *User) UpdateContact(contactId int, param string, value interface{}) {
+func (u *User) GetAllContacts() []*contact.Contact {
 	if !u.checkIsStaffAndIsActive() {
-		return
+		return nil
 	}
-	contactObj := u.GetContactById(contactId)
-	if contactObj != nil {
-		contactObj.UpdateContact(param, value)
-	}
+	return u.Contacts
 }
 
-func (u *User) CreateContactDetails(contactId int, ctype, cvalue string) {
-	if !u.checkIsStaffAndIsActive() {
-		return
-	}
-	contactObj := u.GetContactById(contactId)
-	if contactObj != nil {
-		contactObj = u.GetContactById(contactId)
+func (u *User) UpdateContact(contactId int, param string, value interface{}) {
+	c := u.GetContactById(contactId)
+	if c != nil {
+		c.UpdateContact(param, value)
 	}
 }
 
 func (u *User) DeleteContact(contactId int) {
-	if !u.checkIsStaffAndIsActive() {
-		return
+	c := u.GetContactById(contactId)
+	if c != nil {
+		c.DeleteContact()
 	}
-	contactObj := u.GetContactById(contactId)
-	if contactObj != nil {
-		contactObj.IsActive = false
-		fmt.Println("Contact", contactObj.FName, contactObj.LName, "(ID:", contactObj.ContactID, ") has been soft deleted (IsActive=false).")
+}
+
+func (u *User) CreateContactDetail(contactId int, ctype, cvalue string) {
+	c := u.GetContactById(contactId)
+	if c != nil {
+		c.CreateContactDetail(ctype, cvalue)
+	}
+}
+
+func (u *User) UpdateContactDetail(contactId, detailId int, param string, value interface{}) {
+	c := u.GetContactById(contactId)
+	if c != nil {
+		c.UpdateContactDetail(detailId, param, value)
+	}
+}
+
+func (u *User) DeleteContactDetail(contactId, detailId int) {
+	c := u.GetContactById(contactId)
+	if c != nil {
+		c.DeleteContactDetail(detailId)
 	}
 }

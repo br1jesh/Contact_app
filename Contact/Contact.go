@@ -13,6 +13,7 @@ type Contact struct {
 	ContactDetails []*contactDetails.ContactDetail
 }
 
+
 func NewContact(fName, lName string, id int) *Contact {
 	c := &Contact{
 		ContactID:      id,
@@ -75,17 +76,17 @@ func (c *Contact) DeleteContact() {
 	fmt.Println("Contact", c.FName, c.LName, "(ID:", c.ContactID, ") has been soft deleted (IsActive=false).")
 }
 
-//ContactDetails------->>>>>>>
 
 func (c *Contact) CreateContactDetail(typeName, value string) {
 	if !c.IsActive {
-		fmt.Println("Cannot add contact details to inactive contact.")
+		fmt.Println(" inactive contact.")
 		return
 	}
 	detail := contactDetails.NewContactDetail(typeName, value)
 	c.ContactDetails = append(c.ContactDetails, detail)
 	fmt.Println("Contact detail added successfully:", typeName, "-", value)
 }
+
 
 func (c *Contact) ReadAllContactDetails() {
 	if len(c.ContactDetails) == 0 {
@@ -105,7 +106,7 @@ func (c *Contact) ReadContactDetailByID(id int) *contactDetails.ContactDetail {
 			return detail
 		}
 	}
-	fmt.Println("Contact detail not found for ID:", id)
+	fmt.Println("Contact detail not found :", id)
 	return nil
 }
 
@@ -127,10 +128,8 @@ func (c *Contact) DeleteContactDetail(id int) {
 	}
 	if index != -1 {
 		c.ContactDetails = append(c.ContactDetails[:index], c.ContactDetails[index+1:]...)
-		fmt.Println("ContactDetail with ID", id, "has been deleted permanently.")
+		fmt.Println("ContactDetail  ID", id, "has been deleted .")
 	} else {
-		fmt.Println("Contact detail not found for deletion with ID:", id)
+		fmt.Println("Contact detail not found for deletion :", id)
 	}
 }
-
-

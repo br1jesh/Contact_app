@@ -1,35 +1,44 @@
 package main
 
 import (
-	"Contact_App/user"
+	user "Contact_App/User"
+	"fmt"
 )
 
 func main() {
-	admin := user.NewAdmin("Brijesh", "Mavani")
-	staff := admin.NewStaff("Jay", "Shah")
-	contact := staff.CreateContact("Samir", "Patel")
+	admin := user.NewAdmin("Vishav", "Pathania")
+	fmt.Println("Admin created:", *admin)
+	staff := admin.NewStaff("Brijesh", "Mavani")
+	fmt.Println("Staff created:", *staff)
+	contact := staff.CreateContact("Aniket", "Pardeshi")
+	fmt.Println("Contact created:", *contact)
 
-	staff.CreateContactDetails(contact.ContactID, "phone", "1234567890")
-	staff.CreateContactDetails(contact.ContactID, "email", "samir@gmail.com")
-	staff.CreateContactDetails(contact.ContactID, "address", "Ahmedabad")
+	staff.CreateContactDetail(contact.ContactID, "Email", "aniketpardeshi@gmail.com")
+	staff.CreateContactDetail(contact.ContactID, "Phone", "9876543210")
+	staff.CreateContactDetail(contact.ContactID, "email", "ABS@gmail.com")
 
 	contact.ReadAllContactDetails()
-	contact.ReadContactDetailByID(2)
-	contact.UpdateContactDetail(2, "Value", "samir.new@gmail.com")
+
+	contact.UpdateContactDetail(2, "Value", "9876501234")
+	contact.ReadAllContactDetails()
+
 	contact.DeleteContactDetail(1)
-
 	contact.ReadAllContactDetails()
 
+	contact.UpdateContact("FName", "AniketUpdated")
+	contact.UpdateContact("LName", "PardeshiUpdated")
+	staff.DeleteContact(contact.ContactID)
 
-	contact.UpdateContact("FName", "Sameer")
-	contact.UpdateContact("LName", "PatelUpdated")
-	contact.DeleteContact()
+	foundContact := staff.GetContactById(contact.ContactID)
+	fmt.Println("Retrieved after delete:", foundContact)
 
-	
-	admin.UpdateUser(staff, "FName", "Jaydeep")
-	admin.UpdateUser(staff, "LName", "Kapoor")
-	admin.UpdateUser(staff, "IsAdmin", true)
+	for _, u := range admin.GetAllUsers() {
+		fmt.Println(u)
+	}
 
-	
 	admin.DeleteUser(staff)
+
+	for _, u := range admin.GetAllUsers() {
+		fmt.Println(u)
+	}
 }
